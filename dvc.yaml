@@ -1,0 +1,48 @@
+stages:
+  data_ingestion:
+    cmd: python src/covid_risk_detection/pipeline/stage_01_data_ingestion.py
+    deps:
+      - src/covid_risk_detection/pipeline/stage_01_data_ingestion.py
+      - src/covid_risk_detection/components/data_ingestion.py
+      - config/config.yaml
+    outs:
+      - artifacts/data_ingestion
+
+  data_transformation:
+    cmd: python src/covid_risk_detection/pipeline/stage_02_data_transformation.py
+    deps:
+      - src/covid_risk_detection/pipeline/stage_02_data_transformation.py
+      - src/covid_risk_detection/components/data_transformation.py
+      - config/config.yaml
+      - artifacts/data_ingestion
+    outs:
+      - artifacts/data_transformation
+
+  model_trainer:
+    cmd: python src/covid_risk_detection/pipeline/stage_03_model_trainer.py
+    deps:
+      - src/covid_risk_detection/pipeline/stage_03_model_trainer.py
+      - src/covid_risk_detection/components/model_trainer.py
+      - src/covid_risk_detection/components/fuzzy_ontology.py
+      - config/config.yaml
+      - artifacts/data_transformation
+    params:
+      - LightGBM.n_estimators
+      - LightGBM.max_depth
+      - LightGBM.learning_rate
+      - LightGBM.subsample
+      - LightGBM.colsample_bytree
+      - LightGBM.min_child_samples
+    outs:
+      - artifacts/model_trainer
+
+  model_evaluation:
+    cmd: python src/covid_risk_detection/pipeline/stage_04_model_evaluation.py
+    deps:
+      - src/covid_risk_detection/pipeline/stage_04_model_evaluation.py
+      - src/covid_risk_detection/components/model_evaluation.py
+      - config/config.yaml
+      - artifacts/model_trainer
+    metrics:
+      - artifacts/model_evaluation/metrics.json:
+          cache: false

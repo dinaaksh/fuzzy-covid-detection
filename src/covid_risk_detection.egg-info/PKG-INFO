@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: covid_risk_detection
+Version: 0.0.1
+Summary: A small python package for COVID detection app
+Home-page: https://github.com/dinaaksh/fuzzy-covid-detection
+Author: dinaaksh
+Dynamic: author
+Dynamic: description
+Dynamic: home-page
+Dynamic: summary
+
+hello this is a test project.
