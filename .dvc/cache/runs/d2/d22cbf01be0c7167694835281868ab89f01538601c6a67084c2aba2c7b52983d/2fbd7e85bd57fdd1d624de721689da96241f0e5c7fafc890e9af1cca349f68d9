@@ -1,0 +1,24 @@
+cmd: python src/covid_risk_detection/pipeline/stage_04_model_evaluation.py
+deps:
+- path: artifacts/model_trainer
+  hash: md5
+  md5: 02c62f5dcd3effb4dc88db33e1424e43.dir
+  size: 4600591
+  nfiles: 4
+- path: config/config.yaml
+  hash: md5
+  md5: fe94b83df69c9aaf7028c119f75fab64
+  size: 558
+- path: src/covid_risk_detection/components/model_evaluation.py
+  hash: md5
+  md5: fdb74484ac79affb4468d3367ddd384c
+  size: 1741
+- path: src/covid_risk_detection/pipeline/stage_04_model_evaluation.py
+  hash: md5
+  md5: 6dead9ae1588ca0421a00239cf1cabde
+  size: 1319
+outs:
+- path: artifacts/model_evaluation/metrics.json
+  hash: md5
+  md5: 57c89a529fa97a8076518931dc532fda
+  size: 228

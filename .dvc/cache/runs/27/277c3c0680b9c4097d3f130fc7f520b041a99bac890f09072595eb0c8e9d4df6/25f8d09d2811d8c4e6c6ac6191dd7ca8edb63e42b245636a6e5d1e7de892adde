@@ -1,0 +1,37 @@
+cmd: python src/covid_risk_detection/pipeline/stage_03_model_trainer.py
+deps:
+- path: artifacts/data_transformation
+  hash: md5
+  md5: a326a54b1e4d2970a1ba46c8832fcfb1.dir
+  size: 4504523
+  nfiles: 2
+- path: config/config.yaml
+  hash: md5
+  md5: fe94b83df69c9aaf7028c119f75fab64
+  size: 558
+- path: src/covid_risk_detection/components/fuzzy_ontology.py
+  hash: md5
+  md5: aa39be73124de2f28a85e762c9c28d10
+  size: 9283
+- path: src/covid_risk_detection/components/model_trainer.py
+  hash: md5
+  md5: 317a607a8c3931cb81d9e84b6a9b825a
+  size: 3241
+- path: src/covid_risk_detection/pipeline/stage_03_model_trainer.py
+  hash: md5
+  md5: 0df58ff15c95ecfbb9a4438feb3ece04
+  size: 1177
+params:
+  params.yaml:
+    LightGBM.colsample_bytree: 0.7
+    LightGBM.learning_rate: 0.02
+    LightGBM.max_depth: 5
+    LightGBM.min_child_samples: 20
+    LightGBM.n_estimators: 800
+    LightGBM.subsample: 0.8
+outs:
+- path: artifacts/model_trainer
+  hash: md5
+  md5: 02c62f5dcd3effb4dc88db33e1424e43.dir
+  size: 4600591
+  nfiles: 4

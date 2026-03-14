@@ -1,0 +1,25 @@
+cmd: python src/covid_risk_detection/pipeline/stage_02_data_transformation.py
+deps:
+- path: artifacts/data_ingestion
+  hash: md5
+  md5: b4e607eae2a2d602dcd128c08aba22b7.dir
+  size: 20421265
+  nfiles: 29
+- path: config/config.yaml
+  hash: md5
+  md5: fe94b83df69c9aaf7028c119f75fab64
+  size: 558
+- path: src/covid_risk_detection/components/data_transformation.py
+  hash: md5
+  md5: 7c1d1ae079a9371d622ca0ebd1c9ce2f
+  size: 9123
+- path: src/covid_risk_detection/pipeline/stage_02_data_transformation.py
+  hash: md5
+  md5: dd3ee4f35fcbac700fbe70c7e927b609
+  size: 1184
+outs:
+- path: artifacts/data_transformation
+  hash: md5
+  md5: a326a54b1e4d2970a1ba46c8832fcfb1.dir
+  size: 4504523
+  nfiles: 2
