@@ -1,7 +1,0 @@
-{
-    "roc_auc_score": 0.912573984257794,
-    "best_f1_score": 0.7245508982035929,
-    "precision_at_best_f1": 0.8832116788321168,
-    "recall_at_best_f1": 0.6142131979695431,
-    "balanced_threshold": 0.3488406747891284
-}
