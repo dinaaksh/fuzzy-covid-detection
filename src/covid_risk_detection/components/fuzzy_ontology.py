@@ -4,171 +4,214 @@ import skfuzzy as fuzz
 import skfuzzy.control as ctrl
 from tqdm import tqdm
 
+
 class FuzzyOntologyEngine:
     def __init__(self):
         self._build_universes()
-        self._build_membership_functions()
         self._build_systems()
 
     def _build_universes(self):
-        binary_inputs = [
-            'smell_loss', 'taste_loss', 'fever', 'cough', 'sob',
-            'fatigue', 'runny_nose', 'sore_throat', 'headache',
-            'diarrhea', 'muscle_sore', 'exposure'
-        ]
-        self._antecedents = {}
-        for name in binary_inputs:
-            u = ctrl.Antecedent(np.linspace(0, 1, 11), name)
-            u['absent']  = fuzz.trimf(u.universe, [0.0, 0.0, 0.5])
-            u['present'] = fuzz.trimf(u.universe, [0.5, 1.0, 1.0])
-            self._antecedents[name] = u
+        #0–1=mild, 2–4=moderate, 5+=heavy
+        self.symptom_count_in = ctrl.Antecedent(np.linspace(0, 9, 91), 'symptom_count')
+        self.symptom_count_in['low']    = fuzz.trapmf(self.symptom_count_in.universe, [0, 0, 1, 2])
+        self.symptom_count_in['medium'] = fuzz.trimf(self.symptom_count_in.universe,  [1, 3, 5])
+        self.symptom_count_in['high']   = fuzz.trapmf(self.symptom_count_in.universe, [4, 6, 9, 9])
 
-        self.temp_u = ctrl.Antecedent(np.linspace(35, 42, 71), 'temperature')
-        self.sats_u = ctrl.Antecedent(np.linspace(85, 100, 151), 'sats')
-        self.rr_u   = ctrl.Antecedent(np.linspace(8, 40, 321), 'rr')
+        self.symptom_burden = ctrl.Consequent(np.linspace(0, 1, 101), 'symptom_burden',
+                                              defuzzify_method='centroid')
+        self.symptom_burden['low']    = fuzz.trapmf(self.symptom_burden.universe, [0.0, 0.0, 0.25, 0.40])
+        self.symptom_burden['medium'] = fuzz.trimf(self.symptom_burden.universe,  [0.25, 0.50, 0.75])
+        self.symptom_burden['high']   = fuzz.trapmf(self.symptom_burden.universe, [0.60, 0.80, 1.0, 1.0])
 
-        self.covid_risk_u    = ctrl.Consequent(np.linspace(0, 1, 101), 'covid_risk',    defuzzify_method='centroid')
-        self.flu_risk_u      = ctrl.Consequent(np.linspace(0, 1, 101), 'flu_risk',      defuzzify_method='centroid')
-        self.resp_alarm_u    = ctrl.Consequent(np.linspace(0, 1, 101), 'resp_alarm',    defuzzify_method='centroid')
-        self.exposure_out_u  = ctrl.Consequent(np.linspace(0, 1, 101), 'exposure_out',  defuzzify_method='centroid')
+        #ratios: loss_of_smell 22x, loss_of_taste 18x, fever 8.6x, muscle_sore 5.2x, cough 5.1x
+        self.covid_sig_in = ctrl.Antecedent(np.linspace(0, 5, 51), 'covid_signature')
+        self.covid_sig_in['low']    = fuzz.trapmf(self.covid_sig_in.universe, [0, 0, 0.5, 1.5])
+        self.covid_sig_in['medium'] = fuzz.trimf(self.covid_sig_in.universe,  [1.0, 2.0, 3.0])
+        self.covid_sig_in['high']   = fuzz.trapmf(self.covid_sig_in.universe, [2.5, 3.5, 5.0, 5.0])
 
-    def _build_membership_functions(self):
-        t = self.temp_u
-        t['normal']    = fuzz.trapmf(t.universe, [35, 35, 37.2, 37.5])
-        t['low_grade'] = fuzz.trimf(t.universe,  [37.2, 37.8, 38.5])
-        t['high']      = fuzz.trapmf(t.universe, [38.0, 38.5, 42, 42])
+        self.covid_signature = ctrl.Consequent(np.linspace(0, 1, 101), 'covid_signature_score',
+                                               defuzzify_method='centroid')
+        self.covid_signature['low']    = fuzz.trapmf(self.covid_signature.universe, [0.0, 0.0, 0.20, 0.40])
+        self.covid_signature['medium'] = fuzz.trimf(self.covid_signature.universe,  [0.25, 0.50, 0.75])
+        self.covid_signature['high']   = fuzz.trapmf(self.covid_signature.universe, [0.60, 0.80, 1.0, 1.0])
 
-        s = self.sats_u
-        s['normal']     = fuzz.trapmf(s.universe, [95, 97, 100, 100])
-        s['concerning'] = fuzz.trimf(s.universe,  [92, 94,  96])
-        s['critical']   = fuzz.trapmf(s.universe, [85, 85,  92,  94])
+        self.temp = ctrl.Antecedent(np.linspace(35, 42, 71), 'temperature')
+        self.temp['normal']   = fuzz.trapmf(self.temp.universe, [35.0, 35.0, 37.2, 37.5])
+        self.temp['elevated'] = fuzz.trimf(self.temp.universe,  [37.2, 37.8, 38.5])
+        self.temp['high']     = fuzz.trapmf(self.temp.universe, [38.0, 39.0, 42.0, 42.0])
 
-        r = self.rr_u
-        r['normal']   = fuzz.trapmf(r.universe, [8,  8,  16, 20])
-        r['elevated'] = fuzz.trapmf(r.universe, [18, 22, 40, 40])
+        self.pulse = ctrl.Antecedent(np.linspace(40, 200, 161), 'pulse')
+        self.pulse['normal']   = fuzz.trapmf(self.pulse.universe, [40, 40,  90, 100])
+        self.pulse['elevated'] = fuzz.trimf(self.pulse.universe,  [90, 110, 125])
+        self.pulse['high']     = fuzz.trapmf(self.pulse.universe, [115, 130, 200, 200])
 
-        for out_u in [self.covid_risk_u, self.flu_risk_u, self.resp_alarm_u, self.exposure_out_u]:
-            out_u['low']    = fuzz.trapmf(out_u.universe, [0.0, 0.0, 0.2, 0.35])
-            out_u['medium'] = fuzz.trimf(out_u.universe,  [0.25, 0.5, 0.75])
-            out_u['high']   = fuzz.trapmf(out_u.universe, [0.65, 0.8, 1.0, 1.0])
+        self.sats = ctrl.Antecedent(np.linspace(80, 100, 21), 'sats')
+        self.sats['low']    = fuzz.trapmf(self.sats.universe, [80, 80, 92, 94])
+        self.sats['normal'] = fuzz.trapmf(self.sats.universe, [93, 95, 100, 100])
 
-    def _a(self, name):
-        return self._antecedents[name]
+        self.vitals_risk = ctrl.Consequent(np.linspace(0, 1, 101), 'vitals_risk',
+                                           defuzzify_method='centroid')
+        self.vitals_risk['low']    = fuzz.trapmf(self.vitals_risk.universe, [0.0, 0.0, 0.25, 0.40])
+        self.vitals_risk['medium'] = fuzz.trimf(self.vitals_risk.universe,  [0.25, 0.50, 0.75])
+        self.vitals_risk['high']   = fuzz.trapmf(self.vitals_risk.universe, [0.60, 0.80, 1.0, 1.0])
+
+
+        for name in ['in_burden', 'in_signature', 'in_vitals']:
+            inp = ctrl.Antecedent(np.linspace(0, 1, 101), name)
+            inp['low']    = fuzz.trapmf(inp.universe, [0.0, 0.0, 0.25, 0.45])
+            inp['medium'] = fuzz.trimf(inp.universe,  [0.25, 0.50, 0.75])
+            inp['high']   = fuzz.trapmf(inp.universe, [0.55, 0.75, 1.0, 1.0])
+            setattr(self, name, inp)
+
+        self.final_risk = ctrl.Consequent(np.linspace(0, 1, 101), 'final_risk',
+                                          defuzzify_method='centroid')
+        self.final_risk['low']    = fuzz.trapmf(self.final_risk.universe, [0.0, 0.0, 0.25, 0.45])
+        self.final_risk['medium'] = fuzz.trimf(self.final_risk.universe,  [0.30, 0.50, 0.70])
+        self.final_risk['high']   = fuzz.trapmf(self.final_risk.universe, [0.55, 0.75, 1.0, 1.0])
 
     def _build_systems(self):
-        sl, tl, fv, cg, sb, ft, rn, st, hd, dr, ms, ex = (
-            self._a('smell_loss'), self._a('taste_loss'), self._a('fever'), self._a('cough'), 
-            self._a('sob'), self._a('fatigue'), self._a('runny_nose'), self._a('sore_throat'), 
-            self._a('headache'), self._a('diarrhea'), self._a('muscle_sore'), self._a('exposure')
-        )
-        tmp, sp, rr = self.temp_u, self.sats_u, self.rr_u
-        cr, fr, ra, eo = self.covid_risk_u, self.flu_risk_u, self.resp_alarm_u, self.exposure_out_u
 
-        covid_rules = [
-            ctrl.Rule(ft['absent'] & cg['absent'] & hd['absent'] & sb['absent'], cr['medium']),
-            
-            ctrl.Rule(ft['absent'] & cg['absent'] & hd['present'] & sl['present'], cr['high']),
-            ctrl.Rule(ft['absent'] & cg['present'] & sl['present'], cr['high']),
-            ctrl.Rule(ft['present'] & sl['present'] & ex['absent'], cr['high']),
-            ctrl.Rule(ft['present'] & sl['present'] & ex['present'] & sb['absent'], cr['high']),
-            
-            ctrl.Rule(ft['absent'] & cg['present'] & sl['absent'] & fv['present'], cr['high']),
-            
-            ctrl.Rule(ft['present'] & sl['absent'] & fv['present'] & cg['present'], cr['high']),
-            
-            ctrl.Rule(ft['absent'] & cg['absent'] & hd['absent'] & sb['present'], cr['low']),
-            ctrl.Rule(ft['absent'] & cg['absent'] & hd['present'] & sl['absent'], cr['low']),
-            ctrl.Rule(ft['absent'] & cg['present'] & sl['absent'] & fv['absent'], cr['low']),
-            
-            ctrl.Rule(ft['present'] & sl['absent'] & fv['absent'], cr['low']),
-            ctrl.Rule(ft['present'] & sl['absent'] & fv['present'] & cg['absent'], cr['low']),
-            
-            ctrl.Rule(ft['present'] & sl['present'] & ex['present'] & sb['present'], cr['low'])
+        sc = self.symptom_count_in
+        sb = self.symptom_burden
+        burden_rules = [
+            ctrl.Rule(sc['high'],   sb['high']),
+            ctrl.Rule(sc['medium'], sb['medium']),
+            ctrl.Rule(sc['low'],    sb['low']),
         ]
+        self.burden_sim = ctrl.ControlSystemSimulation(ctrl.ControlSystem(burden_rules))
 
-        flu_rules = [
-            ctrl.Rule(rn['present'] & st['present'] & hd['present'],             fr['high']),
-            ctrl.Rule(rn['present'] & st['present'],                             fr['medium']),
-            ctrl.Rule(rn['present'] & hd['present'],                             fr['medium']),
-            ctrl.Rule(rn['present'] & sl['absent'],                              fr['medium']),
-            ctrl.Rule(st['present'] & sl['absent'] & tl['absent'],               fr['medium']),
-            ctrl.Rule(sb['present'] & rn['present'],                             fr['medium']),
-            ctrl.Rule(ft['present'] & st['present'],                             fr['medium']),
-            ctrl.Rule(sl['present'],                                             fr['low']),
-            ctrl.Rule(sl['present'] & tl['present'],                             fr['low']),
+        cs = self.covid_sig_in
+        cso = self.covid_signature
+        signature_rules = [
+            ctrl.Rule(cs['high'],   cso['high']),
+            ctrl.Rule(cs['medium'], cso['medium']),
+            ctrl.Rule(cs['low'],    cso['low']),
         ]
+        self.signature_sim = ctrl.ControlSystemSimulation(ctrl.ControlSystem(signature_rules))
 
-        resp_rules = [
-            ctrl.Rule(sp['critical'],                                            ra['high']),
-            ctrl.Rule(sp['concerning'] & rr['elevated'],                         ra['high']),
-            ctrl.Rule(sp['concerning'] & sb['present'],                          ra['medium']),
-            ctrl.Rule(rr['elevated'] & sb['present'],                            ra['medium']),
-            ctrl.Rule(tmp['high'] & rr['elevated'],                              ra['medium']),
-            ctrl.Rule(sp['normal'] & rr['normal'],                               ra['low']),
+        t, p, s, vr = self.temp, self.pulse, self.sats, self.vitals_risk
+        vitals_rules = [
+            ctrl.Rule(s['low'],vr['high']), 
+            ctrl.Rule(t['high']  | p['high'],vr['high']), 
+            ctrl.Rule(t['elevated'] & p['elevated'],vr['medium']), 
+            ctrl.Rule(t['elevated'] | p['elevated'],vr['medium']),  
+            ctrl.Rule(t['normal'] & p['normal'] & s['normal'], vr['low']),
         ]
+        self.vitals_sim = ctrl.ControlSystemSimulation(ctrl.ControlSystem(vitals_rules))
 
-        exposure_rules = [
-            ctrl.Rule(ex['present'] & fv['present'],                             eo['high']),
-            ctrl.Rule(ex['present'] & cg['present'],                             eo['medium']),
-            ctrl.Rule(ex['present'],                                             eo['medium']),
-            ctrl.Rule(ex['absent'],                                              eo['low']),
+        ib, isig, iv, fr = self.in_burden, self.in_signature, self.in_vitals, self.final_risk
+        master_rules = [
+            ctrl.Rule(isig['high'],                      fr['high']),
+            ctrl.Rule(isig['medium'] & ib['high'],       fr['high']),
+            ctrl.Rule(isig['medium'] & iv['high'],       fr['high']),
+            ctrl.Rule(isig['medium'] & ib['medium'],     fr['medium']),
+            ctrl.Rule(isig['medium'] & iv['medium'],     fr['medium']),
+            ctrl.Rule(isig['low']   & ib['high'],        fr['medium']),
+            ctrl.Rule(isig['low']   & iv['high'],        fr['medium']),
+            ctrl.Rule(isig['low']   & ib['medium'],      fr['low']),
+            ctrl.Rule(isig['low']   & ib['low'],         fr['low']),
         ]
+        self.master_sim = ctrl.ControlSystemSimulation(ctrl.ControlSystem(master_rules))
 
-        self.covid_sys    = ctrl.ControlSystem(covid_rules)
-        self.flu_sys      = ctrl.ControlSystem(flu_rules)
-        self.resp_sys     = ctrl.ControlSystem(resp_rules)
-        self.exposure_sys = ctrl.ControlSystem(exposure_rules)
-        
-        self.covid_sim    = ctrl.ControlSystemSimulation(self.covid_sys)
-        self.flu_sim      = ctrl.ControlSystemSimulation(self.flu_sys)
-        self.resp_sim     = ctrl.ControlSystemSimulation(self.resp_sys)
-        self.exposure_sim = ctrl.ControlSystemSimulation(self.exposure_sys)
 
-    def _safe_simulate(self, sim, inputs: dict, output_key: str) -> float:
+    def _safe_compute(self, sim, inputs: dict, output_key: str) -> float:
         try:
-            for k, v in inputs.items(): 
+            for k, v in inputs.items():
                 sim.input[k] = float(v)
             sim.compute()
             return float(sim.output[output_key])
-        except Exception: 
-            return 0.0
+        except Exception:
+            return 0.0 
 
     def score_row(self, row: dict) -> dict:
-        def b(col): return float(np.clip(row.get(col, 0), 0, 1))
 
-        temp = float(np.clip(row.get('temperature', 37.0), 35, 42))
-        sats = float(np.clip(row.get('sats', 98.0), 85, 100))
-        rr   = float(np.clip(row.get('rr',   16.0),  8, 40))
+        symptom_count = float(row.get('symptom_count', 0))
+        burden_score = self._safe_compute(
+            self.burden_sim,
+            {'symptom_count': np.clip(symptom_count, 0, 9)},
+            'symptom_burden'
+        )
 
-        covid_score = self._safe_simulate(self.covid_sim, {
-            'smell_loss': b('loss_of_smell'), 'taste_loss': b('loss_of_taste'), 'fever': b('fever'),
-            'sob': b('sob'), 'fatigue': b('fatigue'), 'diarrhea': b('diarrhea'), 'muscle_sore': b('muscle_sore'),
-            'runny_nose': b('runny_nose'), 'sore_throat': b('sore_throat'), 'exposure': b('exposure_risk'),
-        }, 'covid_risk')
+        covid_sig = sum([
+            float(row.get('loss_of_smell', 0)),
+            float(row.get('loss_of_taste', 0)),
+            float(row.get('fever', 0)),
+            float(row.get('cough', 0)),
+            float(row.get('muscle_sore', 0)),
+        ])
+        signature_score = self._safe_compute(
+            self.signature_sim,
+            {'covid_signature': np.clip(covid_sig, 0, 5)},
+            'covid_signature_score'
+        )
 
-        flu_score = self._safe_simulate(self.flu_sim, {
-            'runny_nose': b('runny_nose'), 'sore_throat': b('sore_throat'), 'headache': b('headache'),
-            'sob': b('sob'), 'fatigue': b('fatigue'), 'smell_loss': b('loss_of_smell'), 'taste_loss': b('loss_of_taste'),
-        }, 'flu_risk')
+        vitals_measured = (
+            float(row.get('temperature_measured', 0)) > 0 or
+            float(row.get('pulse_measured', 0)) > 0 or
+            float(row.get('sats_measured', 0)) > 0
+        )
 
-        resp_score = self._safe_simulate(self.resp_sim, {
-            'sats': sats, 'rr': rr, 'sob': b('sob'), 'temperature': temp,
-        }, 'resp_alarm')
+        if vitals_measured:
+            temp_val  = float(row.get('temperature', 0)) if float(row.get('temperature_measured', 0)) else 37.0
+            pulse_val = float(row.get('pulse', 0))       if float(row.get('pulse_measured', 0))       else 75.0
+            sats_val  = float(row.get('sats', 0))        if float(row.get('sats_measured', 0))         else 98.0
 
-        exp_score = self._safe_simulate(self.exposure_sim, {
-            'exposure': b('exposure_risk'), 'fever': b('fever'), 'cough': b('cough'),
-        }, 'exposure_out')
+            vitals_score = self._safe_compute(
+                self.vitals_sim,
+                {
+                    'temperature': np.clip(temp_val,  35, 42),
+                    'pulse':       np.clip(pulse_val, 40, 200),
+                    'sats':        np.clip(sats_val,  80, 100),
+                },
+                'vitals_risk'
+            )
+        else:
+            vitals_score = 0.0
+
+        final_score = self._safe_compute(
+            self.master_sim,
+            {
+                'in_burden':    burden_score,
+                'in_signature': signature_score,
+                'in_vitals':    vitals_score,
+            },
+            'final_risk'
+        )
 
         return {
-            'fis_covid_score': covid_score, 'fis_flu_score': flu_score,
-            'fis_resp_alarm': resp_score, 'fis_exposure_score': exp_score,
-            'fis_covid_vs_flu': covid_score - flu_score,
+            'fis_symptom_burden':   burden_score,  
+            'fis_covid_signature':  signature_score,  
+            'fis_vitals_risk':      vitals_score,    
+            'fis_covid_score':      final_score,      
         }
 
+    def score_row_with_memberships(self, row: dict) -> dict:
+
+        scores = self.score_row(row)
+        crisp_output = scores['fis_covid_score']
+        universe     = self.final_risk.universe
+
+        memberships = {
+            'low':    float(fuzz.interp_membership(
+                          universe, self.final_risk['low'].mf,    crisp_output)),
+            'medium': float(fuzz.interp_membership(
+                          universe, self.final_risk['medium'].mf, crisp_output)),
+            'high':   float(fuzz.interp_membership(
+                          universe, self.final_risk['high'].mf,   crisp_output)),
+        }
+        driver = max(
+            [
+                ('covid_signature', scores['fis_covid_signature']),
+                ('symptom_burden',  scores['fis_symptom_burden']),
+                ('vitals_risk',     scores['fis_vitals_risk']),
+            ],
+            key=lambda x: x[1]
+        )[0]
+
+        return {**scores, 'memberships': memberships, 'primary_driver': driver}
+
     def score_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
-        print("   > Running Fuzzy Ontology Engine (Calculating 56,000 integrals)...")
+        print("   > Running Hierarchical Fuzzy Inference System (HFIS)...")
         records = df.to_dict('records')
-        
-        results = [self.score_row(row) for row in tqdm(records, desc="Fuzzy Scoring")]
-        
+        results = [self.score_row(row) for row in tqdm(records, desc="HFIS Scoring")]
         return pd.DataFrame(results, index=df.index)

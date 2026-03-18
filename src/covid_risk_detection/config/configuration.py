@@ -43,22 +43,20 @@ class ConfigurationManager:
 
     def get_model_trainer_config(self) -> ModelTrainerConfig:
         config = self.config.model_trainer
-        params = self.params.LightGBM
+        params = self.params.XGBoost
 
         create_directories([config.root_dir])
 
         model_trainer_config = ModelTrainerConfig(
-            root_dir=config.root_dir,
-            trained_model_path=config.trained_model_path,
-            model_features_path=config.model_features_path,
+            root_dir=Path(config.root_dir),
+            trained_model_path=Path(config.trained_model_path),
+            model_features_path=Path(config.model_features_path),
             n_estimators=params.n_estimators,
             max_depth=params.max_depth,
             learning_rate=params.learning_rate,
             subsample=params.subsample,
             colsample_bytree=params.colsample_bytree,
-            min_child_samples=params.min_child_samples,
-            reg_alpha=params.reg_alpha,
-            reg_lambda=params.reg_lambda,
+            min_child_weight=params.min_child_weight,
             scale_pos_weight=params.scale_pos_weight,
             random_state=params.random_state
         )

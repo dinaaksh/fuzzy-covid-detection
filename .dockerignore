@@ -1,0 +1,19 @@
+# Ignore python virtual environments and cache
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Ignore the research folder (we only need the production pipeline)
+research/
+
+# Ignore raw datasets and intermediate transformations
+# (We only want the final trained model artifacts)
+artifacts/data_ingestion/
+artifacts/data_transformation/
+
+# Ignore environment variables containing your secret API keys
+.env
+
+# Git
+.git/

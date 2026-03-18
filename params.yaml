@@ -1,11 +1,9 @@
-LightGBM:
-  n_estimators: 800
-  max_depth: 5
-  learning_rate: 0.02
-  subsample: 0.8
-  colsample_bytree: 0.7
-  min_child_samples: 20
-  reg_alpha: 0.5
-  reg_lambda: 2.0
-  scale_pos_weight: 3
+XGBoost:
+  n_estimators: 363
+  max_depth: 6
+  learning_rate: 0.03886
+  subsample: 0.7244
+  colsample_bytree: 0.9127
+  min_child_weight: 5       # ADD
+  scale_pos_weight: 70.6   # ADD
   random_state: 42

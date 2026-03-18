@@ -15,4 +15,5 @@ model_trainer:
 
 model_evaluation:
   root_dir: artifacts/model_evaluation
+  model_path: artifacts/model_trainer/final_model.pkl
   metric_file_name: artifacts/model_evaluation/metrics.json

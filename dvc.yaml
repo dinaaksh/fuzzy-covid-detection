@@ -27,12 +27,14 @@ stages:
       - config/config.yaml
       - artifacts/data_transformation
     params:
-      - LightGBM.n_estimators
-      - LightGBM.max_depth
-      - LightGBM.learning_rate
-      - LightGBM.subsample
-      - LightGBM.colsample_bytree
-      - LightGBM.min_child_samples
+          - XGBoost.n_estimators
+          - XGBoost.max_depth
+          - XGBoost.learning_rate
+          - XGBoost.subsample
+          - XGBoost.colsample_bytree
+          - XGBoost.min_child_weight
+          - XGBoost.scale_pos_weight
+          - XGBoost.random_state
     outs:
       - artifacts/model_trainer
 

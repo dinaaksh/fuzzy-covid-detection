@@ -5,16 +5,16 @@ stages:
     deps:
     - path: config/config.yaml
       hash: md5
-      md5: fe94b83df69c9aaf7028c119f75fab64
-      size: 558
+      md5: 2942cb3415f04f4186532055864b1eea
+      size: 613
     - path: src/covid_risk_detection/components/data_ingestion.py
       hash: md5
-      md5: 1c9ddc72b003166b55c9e1653911fac9
-      size: 809
+      md5: db4ca8c5d02b7447e366abb17f5a1b7a
+      size: 725
     - path: src/covid_risk_detection/pipeline/stage_01_data_ingestion.py
       hash: md5
-      md5: 3dcef5e1b62c15e5958d7fbaeb38b594
-      size: 860
+      md5: 1e9944e96c0e087f896f095cf95f6091
+      size: 854
     outs:
     - path: artifacts/data_ingestion
       hash: md5
@@ -32,76 +32,78 @@ stages:
       nfiles: 29
     - path: config/config.yaml
       hash: md5
-      md5: fe94b83df69c9aaf7028c119f75fab64
-      size: 558
+      md5: 2942cb3415f04f4186532055864b1eea
+      size: 613
     - path: src/covid_risk_detection/components/data_transformation.py
       hash: md5
-      md5: 7c1d1ae079a9371d622ca0ebd1c9ce2f
-      size: 9123
+      md5: 42684f724f9f1163634e44c25c2c7345
+      size: 8463
     - path: src/covid_risk_detection/pipeline/stage_02_data_transformation.py
       hash: md5
-      md5: dd3ee4f35fcbac700fbe70c7e927b609
-      size: 1184
+      md5: a29771a1c0a186ee11a40d8263f4fd96
+      size: 1074
     outs:
     - path: artifacts/data_transformation
       hash: md5
-      md5: a326a54b1e4d2970a1ba46c8832fcfb1.dir
-      size: 4504523
+      md5: e308363dc4b0971f965dd4e062ef347b.dir
+      size: 3351531
       nfiles: 2
   model_trainer:
     cmd: python src/covid_risk_detection/pipeline/stage_03_model_trainer.py
     deps:
     - path: artifacts/data_transformation
       hash: md5
-      md5: a326a54b1e4d2970a1ba46c8832fcfb1.dir
-      size: 4504523
+      md5: e308363dc4b0971f965dd4e062ef347b.dir
+      size: 3351531
       nfiles: 2
     - path: config/config.yaml
       hash: md5
-      md5: fe94b83df69c9aaf7028c119f75fab64
-      size: 558
+      md5: 2942cb3415f04f4186532055864b1eea
+      size: 613
     - path: src/covid_risk_detection/components/fuzzy_ontology.py
       hash: md5
-      md5: aa39be73124de2f28a85e762c9c28d10
-      size: 9283
+      md5: 1968c0777f419f3febf685de6b94da94
+      size: 14702
     - path: src/covid_risk_detection/components/model_trainer.py
       hash: md5
-      md5: 317a607a8c3931cb81d9e84b6a9b825a
-      size: 3241
+      md5: 2965687069c052aea8384c150cd61bc4
+      size: 3556
     - path: src/covid_risk_detection/pipeline/stage_03_model_trainer.py
       hash: md5
       md5: 0df58ff15c95ecfbb9a4438feb3ece04
       size: 1177
     params:
       params.yaml:
-        LightGBM.colsample_bytree: 0.7
-        LightGBM.learning_rate: 0.02
-        LightGBM.max_depth: 5
-        LightGBM.min_child_samples: 20
-        LightGBM.n_estimators: 800
-        LightGBM.subsample: 0.8
+        XGBoost.colsample_bytree: 0.9127
+        XGBoost.learning_rate: 0.03886
+        XGBoost.max_depth: 6
+        XGBoost.min_child_weight: 5
+        XGBoost.n_estimators: 363
+        XGBoost.random_state: 42
+        XGBoost.scale_pos_weight: 70.6
+        XGBoost.subsample: 0.7244
     outs:
     - path: artifacts/model_trainer
       hash: md5
-      md5: 02c62f5dcd3effb4dc88db33e1424e43.dir
-      size: 4600591
+      md5: fe7bcac60c554966cec833efe9991fd1.dir
+      size: 3135264
       nfiles: 4
   model_evaluation:
     cmd: python src/covid_risk_detection/pipeline/stage_04_model_evaluation.py
     deps:
     - path: artifacts/model_trainer
       hash: md5
-      md5: 02c62f5dcd3effb4dc88db33e1424e43.dir
-      size: 4600591
+      md5: fe7bcac60c554966cec833efe9991fd1.dir
+      size: 3135264
       nfiles: 4
     - path: config/config.yaml
       hash: md5
-      md5: fe94b83df69c9aaf7028c119f75fab64
-      size: 558
+      md5: 2942cb3415f04f4186532055864b1eea
+      size: 613
     - path: src/covid_risk_detection/components/model_evaluation.py
       hash: md5
-      md5: fdb74484ac79affb4468d3367ddd384c
-      size: 1741
+      md5: a95412cf631041931bc8c1f03f8f7b23
+      size: 3403
     - path: src/covid_risk_detection/pipeline/stage_04_model_evaluation.py
       hash: md5
       md5: 6dead9ae1588ca0421a00239cf1cabde
@@ -109,5 +111,5 @@ stages:
     outs:
     - path: artifacts/model_evaluation/metrics.json
       hash: md5
-      md5: 57c89a529fa97a8076518931dc532fda
-      size: 228
+      md5: 47f920d081c16554a4e09f8fd3f3b863
+      size: 453

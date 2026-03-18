@@ -16,5 +16,4 @@ dvc==3.66.1
 python-box==7.4.1
 ensure==1.0.4
 PyYAML==6.0.3
-
--e .
+xgboost

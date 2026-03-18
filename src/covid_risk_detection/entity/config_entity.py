@@ -21,12 +21,10 @@ class ModelTrainerConfig:
     learning_rate: float
     subsample: float
     colsample_bytree: float
-    min_child_samples: int
-    reg_alpha: float
-    reg_lambda: float
-    scale_pos_weight: int
+    min_child_weight: int     # ADD
+    scale_pos_weight: float   # ADD
     random_state: int
-
+    
 @dataclass(frozen=True)
 class ModelEvaluationConfig:
     root_dir: Path
